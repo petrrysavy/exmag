@@ -105,3 +105,6 @@ venv.bak/
 
 /dagsolvers/mlruns
 /dagsolvers/multirun
+
+# idea files
+.idea/
