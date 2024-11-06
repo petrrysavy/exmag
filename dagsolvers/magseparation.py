@@ -12,7 +12,7 @@ def floydWarshall(adj):
         for i in range(n):
             for j in range(n):
                 len = dist[i][k] + dist[k][j]
-                if dist[i][j] > len:
+                if dist[i][j] < len:
                     dist[i][j] = len
 
     return dist
