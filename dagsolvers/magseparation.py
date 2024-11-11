@@ -75,8 +75,8 @@ def inducing_paths(dist, adjbi):
     return paths
 
 
-def check_for_inducing_path(adj, adjbi):
-    fwdist = floyd_warshall(adj)
+def check_for_inducing_path(adj, adjbi, fwdist):
+    #fwdist = floyd_warshall(adj)
     paths = inducing_paths(fwdist, adjbi)
     retval = []  # list of tuples of lists (directed, bidirected)
     for path in paths:
@@ -90,3 +90,16 @@ def check_for_inducing_path(adj, adjbi):
         retval.append((diredges, biedges))
     return retval
     # todo implmement lazy constraints
+
+
+def check_for_almost_directed_cycles(adj, adjbi, fwdist):
+    # we look over all bi-directed edges and check whether there is path from one endpoint to the other
+    n = len(adj)
+    retval = []
+    for u in range(n):
+        for v in range(n):  # no need to check the other direction as the adjbi is symmetric -> both uv an vu are tested
+            if adjbi[u][v] and fwdist[u][v] != np.inf:  # biedge uv and path uv
+                biedge = (u, v)
+                diredges = trace_f_w(fwdist, u, v)
+                retval.append(diredges, [biedge])
+    return retval
