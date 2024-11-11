@@ -7,6 +7,7 @@ def floyd_warshall(adj):
 
     # initialize the edges from the adj. matrix - inf where adj is zero, 1 otherwise
     dist[adj > 0.5] = 1
+    np.fill_diagonal(dist, 0)
 
     for k in range(n):  # k is the midpoint of SP
         for i in range(n):
@@ -21,6 +22,8 @@ def floyd_warshall(adj):
 def trace_f_w(dist, u, v):
     if dist[u][v] == np.inf:
         return []
+    if dist[u][v] == 1:
+        return [(u, v)]
 
     n = len(dist)
     marked = np.full((n, n), False)
@@ -32,7 +35,7 @@ def trace_f_w(dist, u, v):
     while stack:
         i, j = stack.pop()
         for k in range(n):
-            if dist[i][k] + dist[k][j] == dist[i][j]:  # an SP goes through k
+            if dist[i][k] + dist[k][j] != np.inf:  # a path goes through k
                 for s, t in [(i, k), (k, j)]:
                     if not marked[s][t]:  # make sure not to include duplicates
                         marked[s][t] = True
