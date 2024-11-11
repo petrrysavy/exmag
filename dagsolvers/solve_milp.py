@@ -6,6 +6,7 @@ import notears.utils as utils
 import igraph as ig
 
 from dagsolvers.dagsolver_utils import apply_threshold, find_optimal_threshold, find_minimal_dag_threshold
+from magseparation import floyd_warshall, check_for_inducing_path, check_for_almost_directed_cycles
 
 
 def find_cycles(edges, mode):
@@ -77,7 +78,7 @@ def extract_adj_matrix(edges_vals, weights_vals, d):
     return W
 
 
-def check_for_cycles(model, where):
+def check_for_mag(model, where):
     if where == GRB.Callback.MESSAGE:
         pass
         # edges_vals = model.cbGetSolution(model._edges_vars)
@@ -89,10 +90,11 @@ def check_for_cycles(model, where):
         # print('CALLBACK')
         # make a list of edges selected in the solution
         constr_added = False
-        vals = model.cbGetSolution(model._edges_vars)
+        edges_vals = model.cbGetSolution(model._edges_vars)
+        biedges_vals = model.cbGetSolution(model._biedges_vars)
         weights_vals = model.cbGetSolution(model._edges_weights)
-        selected_edges = gp.tuplelist((i, j) for i, j in model._edges_vars.keys()
-                                      if vals[i, j] > 0.5)
+        selected_edges = gp.tuplelist((i, j) for i, j in model._edges_vars.keys() if edges_vals[i, j] > 0.5)
+
         # find the shortest cycle in the selected edge list
         cycles = find_cycles(selected_edges, model._callback_mode)
         for cycle in cycles:
@@ -107,14 +109,28 @@ def check_for_cycles(model, where):
                          <= len(edges_of_cycle) - 1)
             constr_added = True
 
+        # find the almost directed cycles and inducing paths
+        # TODO ajd and biadj might not work with model.cbGetSolution
+        fwdist = floyd_warshall(edges_vals)
+        almost_directed_cycles = check_for_almost_directed_cycles(edges_vals, biedges_vals, fwdist)
+        inducing_paths = check_for_inducing_path(edges_vals, biedges_vals, fwdist)
+        for lst in (almost_directed_cycles, inducing_paths):
+            for directed_edges, bidirected_edges in lst:
+                model._lazy_count += 1
+                model.cbLazy(gp.quicksum(model._edges_vars[i, j] for i, j in directed_edges) +
+                             gp.quicksum(model._biedges_vars[i, j] for i, j in bidirected_edges)
+                             <= len(directed_edges) + len(bidirected_edges) - 1)
+                constr_added = True
+
         # Compute solving statistics
         rt = model.cbGet(GRB.Callback.RUNTIME)
         if not constr_added and model._B_ref is not None and (
                 rt - model._last_time_stats > 60):  # Compute statistics every 60 seconds
             B_true = model._B_ref
             model._last_time_stats = rt
-            W_sol = extract_adj_matrix(vals, weights_vals, model._d)
-            dag_t, W_sol = find_minimal_dag_threshold(W_sol)
+            W_sol = extract_adj_matrix(edges_vals, weights_vals, model._d)
+            Wbi_sol = extract_adj_matrix(edges_vals, weights_vals, model._d)
+            dag_t, W_sol = find_minimal_dag_threshold(W_sol)  # TODO what is this?
             # W_sol = apply_threshold(W_sol, 0.3)
             default_threshold = 0.3
             W_t = apply_threshold(W_sol, default_threshold)
@@ -242,7 +258,7 @@ def solve(X, lambda1, loss_type, reg_type, w_threshold, tabu_edges={}, B_ref=Non
     m._stats = []
     m._d = d
     m._callback_mode = mode
-    m.optimize(check_for_cycles)
+    m.optimize(check_for_mag)
 
     gap = m.MIPGap
     lazy_count = m._lazy_count

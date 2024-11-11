@@ -6,7 +6,7 @@ def floyd_warshall(adj):
     dist = np.full((n, n), np.inf)
 
     # initialize the edges from the adj. matrix - inf where adj is zero, 1 otherwise
-    dist[adj > 0.5] = 1
+    #dist[adj > 0.5] = 1  # should be already 0-1 matrix TODO delete
 
     for k in range(n):  # k is the midpoint of SP
         for i in range(n):
