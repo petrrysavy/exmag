@@ -53,7 +53,7 @@ def inducing_path_dfs(dist, adj, s, u, possible_endpoints, path, only_one_dir=Tr
 
     paths = []
     # we need to test for endpoint of the inducing path
-    if len(path) > 1:
+    if len(path) > 2:
         if u in possible_endpoints:
             if u < s or not only_one_dir:  # optimization - report only one direction
                 paths.append(path)
@@ -62,10 +62,11 @@ def inducing_path_dfs(dist, adj, s, u, possible_endpoints, path, only_one_dir=Tr
     n = len(dist)
     for v in range(n):
         if adj[u][v] > 0.5:  # iterate neighbors
-            v_endpoints = possible_endpoints if dist[s][v] != np.inf \
-                    else possible_endpoints & set(np.where(dist[:][v] > 0.5)[0])  # exists a path to v?
-            paths_after_v = inducing_path_dfs(dist, adj, s, v, v_endpoints, path + [v])
-            paths.extend(paths_after_v)
+            if v not in path:  # make sure we do not cycle or use edge we came from
+                v_endpoints = possible_endpoints if dist[s][v] != np.inf \
+                        else possible_endpoints & set(np.where(dist[:][v] > 0.5)[0])  # exists a path to v?
+                paths_after_v = inducing_path_dfs(dist, adj, s, v, v_endpoints, path + [v])
+                paths.extend(paths_after_v)
 
     return paths
 

@@ -71,6 +71,16 @@ class TestMAGSeaparator(unittest.TestCase):
     def test_trace_fw_dist(self, fwdist, u, v, edges):
         self.assertEqual(set(trace_f_w(fwdist, u, v)), set(edges))
 
+    @parameterized.expand([
+        (GRAPH_1_EDG, GRAPH_1_BIEDG, GRAPH_1_FW, []),
+        (GRAPH_2_EDG, GRAPH_2_BIEDG, GRAPH_2_FW, [([(Y, X), (W, Q)], [(X, W), (Y, W), (W, Q)])])
+    ])
+    def test_check_for_inducing_path(self, adj, adjbi, fwdist, paths):
+        result = check_for_inducing_path(adj, adjbi, fwdist)
+        result = set((frozenset(edges), frozenset(frozenset({u, v}) for u, v in biedges)) for edges, biedges in result)
+        paths = set((frozenset(edges), frozenset(frozenset({u, v}) for u, v in biedges)) for edges, biedges in paths)
+        self.assertEqual(result, paths)
+
 
 if __name__ == '__main__':
     unittest.main()
