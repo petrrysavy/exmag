@@ -39,12 +39,12 @@ np.fill_diagonal(GRAPH_2_FW, 0)
 
 GRAPH_3_EDG = matrix_from_edges([(X, Y), (Y, Q), (Q, W), (Y, W)], D)
 GRAPH_3_BIEDG = matrix_from_edges([(X, W)], D, bidirect=True)
-GRAPH_3_FW = [
+GRAPH_3_FW = np.array([
     [0, np.inf, np.inf, 1],  # Q
     [2, 0, 1, 2],  # X
     [1, np.inf, 0, 1],  # Y
     [np.inf, np.inf, np.inf, 0]  # W
-]
+])
 
 
 class TestMAGSeaparator(unittest.TestCase):
