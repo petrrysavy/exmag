@@ -101,7 +101,6 @@ def check_for_almost_directed_cycles(adj, adjbi, fwdist):
     for u in range(n):
         for v in range(n):  # no need to check the other direction as the adjbi is symmetric -> both uv an vu are tested
             if adjbi[u][v] and fwdist[u][v] != np.inf:  # biedge uv and path uv
-                biedge = (u, v)
-                diredges = trace_f_w(fwdist, u, v)
-                retval.append(diredges, [biedge])
+                diredges = trace_f_w(fwdist, adj, u, v)
+                retval.append((diredges, [(u, v)]))
     return retval

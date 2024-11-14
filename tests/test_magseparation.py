@@ -38,6 +38,7 @@ GRAPH_2_FW[GRAPH_2_FW == 0] = np.inf
 np.fill_diagonal(GRAPH_2_FW, 0)
 
 GRAPH_3_EDG = matrix_from_edges([(X, Y), (Y, Q), (Q, W), (Y, W)], D)
+GRAPH_3_BIEDG = matrix_from_edges([(X, W)], D, bidirect=True)
 GRAPH_3_FW = [
     [0, np.inf, np.inf, 1],  # Q
     [2, 0, 1, 2],  # X
@@ -80,13 +81,25 @@ class TestMAGSeaparator(unittest.TestCase):
 
     @parameterized.expand([
         (GRAPH_1_EDG, GRAPH_1_BIEDG, GRAPH_1_FW, []),
-        (GRAPH_2_EDG, GRAPH_2_BIEDG, GRAPH_2_FW, [([(Y, X), (W, Q)], [(X, W), (Y, W), (Y, Q)])])
+        (GRAPH_2_EDG, GRAPH_2_BIEDG, GRAPH_2_FW, [([(Y, X), (W, Q)], [(X, W), (Y, W), (Y, Q)])]),
+        (GRAPH_3_EDG, GRAPH_3_BIEDG, GRAPH_3_FW, [])
     ])
     def test_check_for_inducing_path(self, adj, adjbi, fwdist, paths):
         result = check_for_inducing_path(adj, adjbi, fwdist)
         result = set((frozenset(edges), frozenset(frozenset({u, v}) for u, v in biedges)) for edges, biedges in result)
         paths = set((frozenset(edges), frozenset(frozenset({u, v}) for u, v in biedges)) for edges, biedges in paths)
         self.assertEqual(result, paths)
+
+    @parameterized.expand([
+        (GRAPH_1_EDG, GRAPH_1_BIEDG, GRAPH_1_FW, []),
+        (GRAPH_2_EDG, GRAPH_2_BIEDG, GRAPH_2_FW, []),
+        (GRAPH_3_EDG, GRAPH_3_BIEDG, GRAPH_3_FW, [([(X, Y), (Y, Q), (Q, W), (Y, W)], [(X, W)])])
+    ])
+    def test_check_for_almost_directed_cycles(self, adj, adjbi, fwdist, cycles):
+        result = check_for_almost_directed_cycles(adj, adjbi, fwdist)
+        result = set((frozenset(edges), frozenset(frozenset({u, v}) for u, v in biedges)) for edges, biedges in result)
+        cycles = set((frozenset(edges), frozenset(frozenset({u, v}) for u, v in biedges)) for edges, biedges in cycles)
+        self.assertEqual(result, cycles)
 
 
 if __name__ == '__main__':
