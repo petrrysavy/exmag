@@ -19,15 +19,15 @@ def floyd_warshall(adj):
     return dist
 
 
-def trace_f_w(dist, u, v):
+def trace_f_w(dist, adj, u, v):
     if dist[u][v] == np.inf:
         return []
-    if dist[u][v] == 1:
-        return [(u, v)]
 
     n = len(dist)
     marked = np.full((n, n), False)
     edges = []
+    if adj[u][v] == 1:
+        edges.append((u, v))
     stack = []
     marked[u, v] = True
     stack.append((u, v))
@@ -39,10 +39,9 @@ def trace_f_w(dist, u, v):
                 for s, t in [(i, k), (k, j)]:
                     if not marked[s][t]:  # make sure not to include duplicates
                         marked[s][t] = True
-                        if dist[s][t] == 1:  # direct edge, add it to the list
+                        if adj[s][t] == 1:  # direct edge, add it to the list
                             edges.append((s, t))
-                        else:  # a path, recurse
-                            stack.append((s, t))
+                        stack.append((s, t))  # a path, recurse
     return edges
 
 
@@ -63,8 +62,8 @@ def inducing_path_dfs(dist, adj, s, u, possible_endpoints, path, only_one_dir=Tr
     for v in range(n):
         if adj[u][v] > 0.5:  # iterate neighbors
             if v not in path:  # make sure we do not cycle or use edge we came from
-                v_endpoints = possible_endpoints if dist[s][v] != np.inf \
-                        else possible_endpoints & set(np.where(dist[:][v] > 0.5)[0])  # exists a path to v?
+                v_endpoints = possible_endpoints if dist[v][s] != np.inf \
+            else possible_endpoints & set(np.where(dist[v][:] < np.inf)[0])  # exists a path to v?
                 paths_after_v = inducing_path_dfs(dist, adj, s, v, v_endpoints, path + [v])
                 paths.extend(paths_after_v)
 
@@ -89,11 +88,10 @@ def check_for_inducing_path(adj, adjbi, fwdist):
         biedges = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
         diredges = []
         for v in path[1:-1]:
-            diredges.extend(trace_f_w(fwdist, s, v))
-            diredges.extend(trace_f_w(fwdist, t, v))
+            diredges.extend(trace_f_w(fwdist, adj, v, s))
+            diredges.extend(trace_f_w(fwdist, adj, v, t))
         retval.append((diredges, biedges))
     return retval
-    # todo implmement lazy constraints
 
 
 def check_for_almost_directed_cycles(adj, adjbi, fwdist):

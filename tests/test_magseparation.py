@@ -32,7 +32,7 @@ GRAPH_1_FW[GRAPH_1_FW == 0] = np.inf
 np.fill_diagonal(GRAPH_1_FW, 0)
 
 GRAPH_2_EDG = matrix_from_edges([(Y, X), (W, Q)], D)
-GRAPH_2_BIEDG = matrix_from_edges([(X, W), (Y, W), (W, Q)], D, bidirect=True)
+GRAPH_2_BIEDG = matrix_from_edges([(X, W), (Y, W), (Y, Q)], D, bidirect=True)
 GRAPH_2_FW = GRAPH_2_EDG.astype(float)
 GRAPH_2_FW[GRAPH_2_FW == 0] = np.inf
 np.fill_diagonal(GRAPH_2_FW, 0)
@@ -57,23 +57,30 @@ class TestMAGSeaparator(unittest.TestCase):
         npt.assert_array_equal(floyd_warshall(adj), fwdist)
 
     @parameterized.expand([
-            (GRAPH_1_FW, W, X, [(W, X)]),
-            (GRAPH_1_FW, X, W, []),
-            (GRAPH_1_FW, Q, W, []),
-            (GRAPH_2_FW, Y, X, [(Y, X)]),
-            (GRAPH_2_FW, X, Y, []),
-            (GRAPH_2_FW, Q, W, []),
-            (GRAPH_3_FW, X, Q, [(Y, Q), (X, Y)]),
-            (GRAPH_3_FW, X, W, [(X, Y), (Y, Q), (Q, W), (Y, W)]),
-            (GRAPH_3_FW, Y, Q, [(Y, Q)]),
-            (GRAPH_3_FW, Y, X, [])
+            (GRAPH_1_FW, GRAPH_1_EDG, W, X, [(W, X)]),
+            (GRAPH_1_FW, GRAPH_1_EDG, X, W, []),
+            (GRAPH_1_FW, GRAPH_1_EDG, Q, W, []),
+            (GRAPH_2_FW, GRAPH_2_EDG, Y, X, [(Y, X)]),
+            (GRAPH_2_FW, GRAPH_2_EDG, X, Y, []),
+            (GRAPH_2_FW, GRAPH_2_EDG, W, Q, [(W, Q)]),
+            (GRAPH_2_FW, GRAPH_2_EDG, Q, W, []),
+            (GRAPH_2_FW, GRAPH_2_EDG, X, W, []),
+            (GRAPH_3_FW, GRAPH_3_EDG, X, W, [(X, Y), (Y, Q), (Q, W), (Y, W)]),
+            (GRAPH_3_FW, GRAPH_3_EDG, W, X, []),
+            (GRAPH_3_FW, GRAPH_3_EDG, Y, Q, [(Y, Q)]),
+            (GRAPH_3_FW, GRAPH_3_EDG, X, Q, [(Y, Q), (X, Y)]),
+            (GRAPH_3_FW, GRAPH_3_EDG, Y, W, [(Y, Q), (Q, W), (Y, W)]),
+            (GRAPH_3_FW, GRAPH_3_EDG, W, Y, []),
+            (GRAPH_3_FW, GRAPH_3_EDG, Q, W, [(Q, W)]),
+            (GRAPH_3_FW, GRAPH_3_EDG, Y, X, []),
+            (GRAPH_3_FW, GRAPH_3_EDG, W, X, [])
     ])
-    def test_trace_fw_dist(self, fwdist, u, v, edges):
-        self.assertEqual(set(trace_f_w(fwdist, u, v)), set(edges))
+    def test_trace_fw_dist(self, fwdist, adj, u, v, edges):
+        self.assertEqual(set(trace_f_w(fwdist, adj, u, v)), set(edges))
 
     @parameterized.expand([
         (GRAPH_1_EDG, GRAPH_1_BIEDG, GRAPH_1_FW, []),
-        (GRAPH_2_EDG, GRAPH_2_BIEDG, GRAPH_2_FW, [([(Y, X), (W, Q)], [(X, W), (Y, W), (W, Q)])])
+        (GRAPH_2_EDG, GRAPH_2_BIEDG, GRAPH_2_FW, [([(Y, X), (W, Q)], [(X, W), (Y, W), (Y, Q)])])
     ])
     def test_check_for_inducing_path(self, adj, adjbi, fwdist, paths):
         result = check_for_inducing_path(adj, adjbi, fwdist)
