@@ -5,7 +5,7 @@ import notears.utils as utils
 
 import igraph as ig
 
-from dagsolvers.dagsolver_utils import apply_threshold, find_optimal_threshold, find_minimal_dag_threshold
+from dagsolvers.dagsolver_utils import apply_threshold, find_optimal_threshold, find_minimal_dag_threshold, tupledict_to_np_matrix
 from dagsolvers.magseparation import floyd_warshall, check_for_inducing_path, check_for_almost_directed_cycles
 
 
@@ -91,7 +91,9 @@ def check_for_mag(model, where):
         # make a list of edges selected in the solution
         constr_added = False
         edges_vals = model.cbGetSolution(model._edges_vars)
+        edges_vals = tupledict_to_np_matrix(edges_vals, model._d)
         biedges_vals = model.cbGetSolution(model._biedges_vars)
+        biedges_vals = tupledict_to_np_matrix(biedges_vals, model._d)
         weights_vals = model.cbGetSolution(model._edges_weights)
         selected_edges = gp.tuplelist((i, j) for i, j in model._edges_vars.keys() if edges_vals[i, j] > 0.5)
 
@@ -129,7 +131,7 @@ def check_for_mag(model, where):
             B_true = model._B_ref
             model._last_time_stats = rt
             W_sol = extract_adj_matrix(edges_vals, weights_vals, model._d)
-            Wbi_sol = extract_adj_matrix(edges_vals, weights_vals, model._d)
+            Wbi_sol = extract_adj_matrix(biedges_vals, weights_vals, model._d)
             dag_t, W_sol = find_minimal_dag_threshold(W_sol)  # TODO what is this?
             # W_sol = apply_threshold(W_sol, 0.3)
             default_threshold = 0.3
@@ -267,11 +269,12 @@ def solve(X, lambda1, loss_type, reg_type, w_threshold, tabu_edges={}, B_ref=Non
 
     # print(f'add constraints: {callback_constraints[1]}')
 
-    edges_vals = m.getAttr('x', edges_vars)
+    edges_vals = tupledict_to_np_matrix(m.getAttr('x', edges_vars), d)
+    biedges_vals = tupledict_to_np_matrix(m.getAttr('x', biedges_vars), d)
     weights_vals = m.getAttr('x', edges_weights)
 
     W = extract_adj_matrix(edges_vals, weights_vals, d)
-    Wbi = extract_adj_matrix(biedges_vars, weights_vals, d)
+    Wbi = extract_adj_matrix(biedges_vals, weights_vals, d)
 
     assert utils.is_dag(W)
     m.dispose()

@@ -68,3 +68,10 @@ def plot(W, filename=None):
         fig.savefig(filename,format='png', bbox_inches='tight')
     else:
         plt.show()
+
+
+def tupledict_to_np_matrix(tuple_dict, d):
+    matrix = np.zeros((d, d))
+    for (i, j), value in tuple_dict.items():
+        matrix[i, j] = value
+    return matrix
