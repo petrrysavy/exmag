@@ -108,3 +108,7 @@ venv.bak/
 
 # idea files
 .idea/
+
+# temporary output files
+X.csv
+W_true.csv

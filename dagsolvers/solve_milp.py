@@ -6,7 +6,7 @@ import notears.utils as utils
 import igraph as ig
 
 from dagsolvers.dagsolver_utils import apply_threshold, find_optimal_threshold, find_minimal_dag_threshold
-from magseparation import floyd_warshall, check_for_inducing_path, check_for_almost_directed_cycles
+from dagsolvers.magseparation import floyd_warshall, check_for_inducing_path, check_for_almost_directed_cycles
 
 
 def find_cycles(edges, mode):
