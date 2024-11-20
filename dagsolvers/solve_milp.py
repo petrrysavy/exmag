@@ -251,6 +251,7 @@ def solve(X, lambda1, loss_type, reg_type, w_threshold, tabu_edges={}, B_ref=Non
     m.Params.MIPGap = 0.1
     m.params.TimeLimit = time_limit
     m._edges_vars = edges_vars
+    m._biedges_vars = biedges_vars
     m._edges_weights = edges_weights
     m._lazy_count = 0
     m._last_time_stats = 0
