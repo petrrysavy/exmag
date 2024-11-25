@@ -46,13 +46,21 @@ GRAPH_3_FW = np.array([
     [np.inf, np.inf, np.inf, 0]  # W
 ])
 
+# GRAPH_4 by Serene
+GRAPH_4_EDG = matrix_from_edges([(Y, X), (Q, W)], D)
+GRAPH_4_BIEDG = matrix_from_edges([(X, W), (Y, W), (Y, Q)], D, bidirect=True)
+GRAPH_4_FW = GRAPH_4_EDG.astype(float)
+GRAPH_4_FW[GRAPH_4_FW == 0] = np.inf
+np.fill_diagonal(GRAPH_4_FW, 0)
+
 
 class TestMAGSeaparator(unittest.TestCase):
 
     @parameterized.expand([
         (GRAPH_1_EDG, GRAPH_1_FW),
         (GRAPH_2_EDG, GRAPH_2_FW),
-        (GRAPH_3_EDG, GRAPH_3_FW)
+        (GRAPH_3_EDG, GRAPH_3_FW),
+        (GRAPH_4_EDG, GRAPH_4_FW)
     ])
     def test_floyd_warshall(self, adj, fwdist):
         npt.assert_array_equal(floyd_warshall(adj), fwdist)
@@ -82,7 +90,8 @@ class TestMAGSeaparator(unittest.TestCase):
     @parameterized.expand([
         (GRAPH_1_EDG, GRAPH_1_BIEDG, GRAPH_1_FW, []),
         (GRAPH_2_EDG, GRAPH_2_BIEDG, GRAPH_2_FW, [([(Y, X), (W, Q)], [(X, W), (Y, W), (Y, Q)])]),
-        (GRAPH_3_EDG, GRAPH_3_BIEDG, GRAPH_3_FW, [])
+        (GRAPH_3_EDG, GRAPH_3_BIEDG, GRAPH_3_FW, []),
+        (GRAPH_4_EDG, GRAPH_4_BIEDG, GRAPH_4_FW, [])
     ])
     def test_check_for_inducing_path(self, adj, adjbi, fwdist, paths):
         result = check_for_inducing_path(adj, adjbi, fwdist)
