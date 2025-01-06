@@ -181,7 +181,7 @@ def solve(X, lambda1, loss_type, reg_type, w_threshold, tabu_edges={}, B_ref=Non
                     m.addConstr(-edges_weights[v1, v2] <= weights_bound * (edges_vars[v1, v2] + biedges_vars[v1, v2]))
 
                 # either bi-directional edge, or normal, not both
-                m.addConstr(edges_weights[v1, v2]  + biedges_vars[v1, v2] <= 1)
+                m.addConstr(edges_vars[v1, v2] + biedges_vars[v1, v2] <= 1)
                 # no directed edge where none should be
                 m.addConstr(edges_vars[v1, v2] + tabu_matrix[v1, v2] <= 1)
                 # bidirectional edge only if directed is forbidden
