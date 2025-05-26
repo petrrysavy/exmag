@@ -5,7 +5,7 @@ import notears.utils as utils
 
 import igraph as ig
 
-from dagsolvers.dagsolver_utils import apply_threshold, find_optimal_threshold, find_minimal_dag_threshold, tupledict_to_np_matrix
+from dagsolvers.dagsolver_utils import apply_threshold, find_optimal_threshold_for_shd, find_minimal_dag_threshold, tupledict_to_np_matrix
 from dagsolvers.magseparation import floyd_warshall, check_for_inducing_path, check_for_almost_directed_cycles
 
 
@@ -139,7 +139,7 @@ def check_for_mag(model, where):
             shd = utils.count_accuracy(B_true, W_t != 0)['shd']
             objval = model.cbGet(GRB.Callback.MIPSOL_OBJ)
 
-            best_t, best_shd, _, _ = find_optimal_threshold(B_true, W_sol)
+            best_t, best_shd = find_optimal_threshold_for_shd(B_true, W_sol, [], [], np.zeros_like(B_true), Wbi_sol)
 
             print(f't{default_threshold}_SHD: {shd} BEST_SHD: {best_shd} BEST_t: {best_t} OBJ: {objval} DAG_t: {dag_t}')
             model._stats.append((round(rt), shd, best_shd, best_t, objval, dag_t))
@@ -161,6 +161,8 @@ def solve(X, lambda1, loss_type, reg_type, w_threshold, tabu_edges={}, B_ref=Non
     tabu_matrix = np.zeros((d, d), dtype=bool)
     for i, j in tabu_edges:
         tabu_matrix[i, j] = True
+        tabu_matrix[j, i] = True
+    tabu_matrix = tabu_matrix.astype(int)
 
     m = gp.Model()
     edges_vars = {}
@@ -291,6 +293,7 @@ def solve(X, lambda1, loss_type, reg_type, w_threshold, tabu_edges={}, B_ref=Non
 
 if __name__ == '__main__':
     from notears import utils
+    # a toy example to test whether the algorithm is properly set up
 
     utils.set_random_seed(1)
 
@@ -315,8 +318,23 @@ if __name__ == '__main__':
     np.savetxt('X.csv', X, delimiter=',')
     # X = np.loadtxt('X.csv', delimiter=',')
 
-    W_est, W_bi, _, _, stats = solve(X, lambda1=0, loss_type='l2', reg_type='l1', w_threshold=0.1, B_ref=B_true,
-                               mode='all_cycles')  # lambda1=0.0009
+    tabu_edges = []
+    hidden_vertices_ratio = 0.2
+    tabu_edges_ratio = 0.2
+    new_d = int(d * (1 - hidden_vertices_ratio))
+    indices = np.random.choice(range(d), size=new_d, replace=False)
+    d = new_d
+    X = X[:, indices]
+    W_true = W_true[np.ix_(indices, indices)]
+    for i in range(d):
+
+        for j in range(i):
+            if W_true[i, j] == 0.0 and W_true[j, i] == 0.0:
+                if np.random.rand() < tabu_edges_ratio:
+                    tabu_edges.append((i, j))
+
+    W_est, W_bi, _, _, stats = solve(X, tabu_edges=tabu_edges, lambda1=0, loss_type='l2', reg_type='l1',
+                                     w_threshold=0.1, B_ref=B_true,  mode='all_cycles')  # lambda1=0.0009
     assert utils.is_dag(W_est)
     np.savetxt('W_est_milp.csv', W_est, delimiter=',')
     acc = utils.count_accuracy(B_true, W_est != 0)
