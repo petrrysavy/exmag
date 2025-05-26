@@ -112,3 +112,4 @@ venv.bak/
 # temporary output files
 X.csv
 W_true.csv
+dagsolvers/*.csv
